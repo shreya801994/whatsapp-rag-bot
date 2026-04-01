@@ -1,0 +1,49 @@
+services:
+  webhook:
+    build: ./webhook
+    ports:
+      - "5000:5000"
+    env_file: .env
+    depends_on:
+      - ollama
+      - chromadb
+    networks:
+      - rag-net
+
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - rag-net
+
+  chromadb:
+    image: chromadb/chroma:0.5.15
+    volumes:
+      - chroma-data:/chroma/chroma
+    ports:
+      - "8000:8000"
+    networks:
+      - rag-net
+
+  ingest:
+    build: ./ingest
+    volumes:
+      - ./docs:/docs
+      - chroma-data:/chroma/chroma
+    depends_on:
+      - chromadb
+    networks:
+      - rag-net
+    profiles:
+      - ingest
+
+volumes:
+  ollama-models:
+  chroma-data:
+
+
+networks:
+  rag-net:
